@@ -1,9 +1,17 @@
-from typing import Any
-from sqlalchemy.ext.declarative import as_declarative, declared_attr
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, declared_attr
+from sqlalchemy.sql import func
+from datetime import datetime
+from typing import Optional
 
-@as_declarative()
-class Base:
-    id: Any
+
+class Base(DeclarativeBase):
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        server_default=func.now(), onupdate=func.now()
+    )
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(nullable=True)
+
     __name__: str
 
     # Generate __tablename__ automatically
