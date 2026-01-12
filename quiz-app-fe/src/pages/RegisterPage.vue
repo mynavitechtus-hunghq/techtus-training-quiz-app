@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-8 bg-background">
+  <div class="min-h-screen flex items-center justify-center p-8 bg-background overflow-hidden">
     <Card class="w-full max-w-md rounded-2xl shadow-lg border-2">
       <CardHeader class="space-y-4 pb-8 pt-8 px-8">
         <div
@@ -14,8 +14,12 @@
       </CardHeader>
 
       <CardContent class="space-y-6 px-8">
-        <Alert v-if="error" variant="destructive" class="rounded-xl">
-          <AlertDescription class="font-medium">{{ error }}</AlertDescription>
+        <Alert
+          v-if="error"
+          variant="destructive"
+          class="rounded-xl border-destructive bg-destructive/10"
+        >
+          <AlertDescription class="font-medium text-destructive">{{ error }}</AlertDescription>
         </Alert>
 
         <div class="space-y-3">
@@ -25,8 +29,13 @@
             v-model="name"
             type="text"
             placeholder="Enter your full name"
-            class="rounded-xl h-12 px-4"
+            :class="[
+              'rounded-xl h-12 px-4',
+              nameError ? 'border-destructive focus:ring-destructive' : '',
+            ]"
+            @input="nameError = ''"
           />
+          <p v-if="nameError" class="text-sm text-destructive">{{ nameError }}</p>
         </div>
 
         <div class="space-y-3">
@@ -36,8 +45,14 @@
             v-model="email"
             type="email"
             placeholder="Enter your email"
-            class="rounded-xl h-12 px-4"
+            :class="[
+              'rounded-xl h-12 px-4',
+              emailError ? 'border-destructive focus:ring-destructive' : '',
+            ]"
+            @blur="validateEmail"
+            @input="emailError = ''"
           />
+          <p v-if="emailError" class="text-sm text-destructive">{{ emailError }}</p>
         </div>
 
         <div class="space-y-3">
@@ -48,7 +63,11 @@
               v-model="password"
               :type="showPassword ? 'text' : 'password'"
               placeholder="Create a strong password (min 6 characters)"
-              class="rounded-xl h-12 px-4 pr-12"
+              :class="[
+                'rounded-xl h-12 px-4 pr-12',
+                passwordError ? 'border-destructive focus:ring-destructive' : '',
+              ]"
+              @input="passwordError = ''"
             />
             <Button
               type="button"
@@ -61,6 +80,7 @@
               <Eye v-else class="w-5 h-5 text-muted-foreground" />
             </Button>
           </div>
+          <p v-if="passwordError" class="text-sm text-destructive">{{ passwordError }}</p>
         </div>
 
         <div class="space-y-3">
@@ -71,7 +91,11 @@
               v-model="confirmPassword"
               :type="showConfirmPassword ? 'text' : 'password'"
               placeholder="Re-enter your password"
-              class="rounded-xl h-12 px-4 pr-12"
+              :class="[
+                'rounded-xl h-12 px-4 pr-12',
+                confirmPasswordError ? 'border-destructive focus:ring-destructive' : '',
+              ]"
+              @input="confirmPasswordError = ''"
               @keydown.enter="handleSubmit"
             />
             <Button
@@ -85,6 +109,9 @@
               <Eye v-else class="w-5 h-5 text-muted-foreground" />
             </Button>
           </div>
+          <p v-if="confirmPasswordError" class="text-sm text-destructive">
+            {{ confirmPasswordError }}
+          </p>
         </div>
       </CardContent>
 
@@ -181,19 +208,65 @@ const showConfirmPassword = ref(false)
 const loading = ref(false)
 const googleLoading = ref(false)
 const error = ref('')
+const nameError = ref('')
+const emailError = ref('')
+const passwordError = ref('')
+const confirmPasswordError = ref('')
+
+const validateEmail = () => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!email.value) {
+    emailError.value = ''
+  } else if (!emailRegex.test(email.value)) {
+    emailError.value = 'Please enter a valid email address'
+  } else {
+    emailError.value = ''
+  }
+}
 
 const handleSubmit = async () => {
   error.value = ''
+  nameError.value = ''
+  emailError.value = ''
+  passwordError.value = ''
+  confirmPasswordError.value = ''
 
-  if (password.value !== confirmPassword.value) {
-    error.value = 'Passwords do not match. Please try again.'
-    return
+  // Validate all fields
+  let hasError = false
+
+  if (!name.value) {
+    nameError.value = 'Full name is required'
+    hasError = true
   }
 
-  if (password.value.length < 6) {
-    error.value = 'Password must be at least 6 characters long.'
-    return
+  if (!email.value) {
+    emailError.value = 'Email is required'
+    hasError = true
+  } else {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email.value)) {
+      emailError.value = 'Please enter a valid email address'
+      hasError = true
+    }
   }
+
+  if (!password.value) {
+    passwordError.value = 'Password is required'
+    hasError = true
+  } else if (password.value.length < 6) {
+    passwordError.value = 'Password must be at least 6 characters long'
+    hasError = true
+  }
+
+  if (!confirmPassword.value) {
+    confirmPasswordError.value = 'Please confirm your password'
+    hasError = true
+  } else if (password.value !== confirmPassword.value) {
+    confirmPasswordError.value = 'Passwords do not match'
+    hasError = true
+  }
+
+  if (hasError) return
 
   loading.value = true
   const success = await authStore.register(email.value, password.value, name.value)
@@ -201,7 +274,7 @@ const handleSubmit = async () => {
   if (success) {
     router.push('/profile')
   } else {
-    error.value = 'Registration failed. Please check your information and try again.'
+    error.value = 'Registration failed. Please try again.'
   }
 
   loading.value = false

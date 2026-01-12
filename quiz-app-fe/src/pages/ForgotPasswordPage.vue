@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center p-8 bg-background">
+  <div class="min-h-screen flex items-center justify-center p-8 bg-background overflow-hidden">
     <Card class="w-full max-w-md rounded-2xl shadow-lg border-2">
       <CardHeader class="space-y-4 pb-8 pt-8 px-8">
         <div
