@@ -1,7 +1,4 @@
-<!-- ============================================ -->
-<!-- FILE: src/pages/LoginPage.vue -->
-<!-- ============================================ -->
-<template>
+<!-- <template>
   <div class="min-h-screen flex items-center justify-center p-8 bg-background overflow-hidden">
     <Card class="w-full max-w-md rounded-2xl shadow-lg border-2">
       <CardHeader class="space-y-4 pb-8 pt-8 px-8">
@@ -14,7 +11,6 @@
       </CardHeader>
 
       <CardContent class="space-y-6 px-8">
-        <!-- Username Field -->
         <div class="space-y-2">
           <Label for="username" class="text-sm font-semibold"> Username or email </Label>
           <Input
@@ -31,12 +27,11 @@
             @keydown.enter="handleSubmit"
           />
           <div v-if="usernameError" class="flex items-start gap-2 mt-2">
-            <AlertCircle class="w-4 h-4 text-destructive mt-0.5 flex-shrink-0" />
+            <AlertCircle class="w-4 h-4 text-destructive mt-0.5 shrink-0" />
             <p class="text-sm text-destructive leading-tight">{{ usernameError }}</p>
           </div>
         </div>
 
-        <!-- Password Field -->
         <div class="space-y-2">
           <Label for="password" class="text-sm font-semibold"> Password </Label>
           <div class="relative">
@@ -69,7 +64,6 @@
           </div>
         </div>
 
-        <!-- General Error Message -->
         <div
           v-if="generalError"
           class="rounded-lg bg-destructive/10 border border-destructive/20 p-4"
@@ -87,7 +81,6 @@
           </div>
         </div>
 
-        <!-- Remember Me & Forgot Password -->
         <div class="flex items-center justify-between pt-2">
           <div class="flex items-center space-x-2">
             <Checkbox
@@ -223,7 +216,7 @@ const clearPasswordError = () => {
 
 const validateUsername = () => {
   if (!username.value.trim()) {
-    return // Don't show error on blur if empty
+    return
   }
 
   // Check if it's an email format
@@ -308,4 +301,47 @@ const goToRegister = () => {
 const goToForgotPassword = () => {
   router.push('/forgot-password')
 }
+</script> -->
+<template>
+  <div class="flex w-full max-w-sm flex-col gap-6 p-10">
+    <div class="absolute top-8 right-8 flex items-center gap-2">
+      <span class="text-muted-foreground text-sm">Don't have an account?</span>
+      <Button
+        type="button"
+        variant="link"
+        class="text-primary hover:text-primary/80 p-0 text-sm font-semibold focus:outline-none focus-visible:ring-0"
+        >Sign up</Button
+      >
+    </div>
+    <p class="text-5xl font-bold">Sign in</p>
+    <div class="space-y-5">
+      <p class="text-sm">Sign in with Open Account</p>
+      <div class="flex items-center justify-center gap-2">
+        <Button type="button" variant="outline" class="flex-1">
+          <Icon name="google" />
+          Google
+        </Button>
+        <Button type="button" variant="outline" class="flex-1">
+          <Icon name="facebook" />
+          Facebook
+        </Button>
+      </div>
+    </div>
+    <Separator />
+    <div class="space-y-5">
+      <p class="text-sm">Or continue with email address</p>
+      <div class="flex flex-col gap-3">
+        <Input placeholder="Email or Username" />
+        <Input type="password" placeholder="Password" />
+        <Button class="h-12">Sign in</Button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup lang="ts">
+import Button from '@/components/ui/button/Button.vue'
+import Input from '@/components/ui/input/Input.vue'
+import Separator from '@/components/ui/separator/Separator.vue'
+import { Icon } from '@/components/ui/icon'
 </script>
