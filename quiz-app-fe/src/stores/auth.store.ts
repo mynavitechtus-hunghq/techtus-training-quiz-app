@@ -136,7 +136,11 @@ export const useAuthStore = defineStore('auth', () => {
     if (!refreshToken) return false
     try {
       const resp: any = await api.refreshToken(refreshToken)
-      setCookie(ACCESS_TOKEN_KEY, resp.access_token, { expires: 1, secure: true, sameSite: 'strict' })
+      setCookie(ACCESS_TOKEN_KEY, resp.access_token, {
+        expires: 1,
+        secure: true,
+        sameSite: 'strict',
+      })
       return true
     } catch (error: any) {
       console.error('Token refresh error:', error)
