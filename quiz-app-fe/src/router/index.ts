@@ -1,22 +1,17 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
-import LoginPage from '@/pages/LoginPage.vue'
 import RegisterPage from '@/pages/RegisterPage.vue'
 import ProfilePage from '@/pages/ProfilePage.vue'
 import ForgotPasswordPage from '@/pages/ForgotPasswordPage.vue'
 import { useAuthStore } from '@/stores/auth.store'
+import { AUTH_ROUTES } from './auth.route'
 
 const routes = [
   {
     path: '/',
     redirect: '/login',
   },
-  {
-    path: '/login',
-    name: 'Login',
-    component: LoginPage,
-    meta: { requiresGuest: true },
-  },
+  ...AUTH_ROUTES,
   {
     path: '/register',
     name: 'Register',
