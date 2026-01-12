@@ -1,102 +1,152 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { setCookie, getCookie, removeCookie } from '@/utils/cookies'
+import { api } from '@/utils/api'
 
-export type UserRole = 'user'
-
-export interface User {
-  email: string
-  role: UserRole
-  name?: string
-}
+const ACCESS_TOKEN_KEY = 'access_token'
+const REFRESH_TOKEN_KEY = 'refresh_token'
+const REMEMBER_EMAIL_KEY = 'remembered_email'
 
 export const useAuthStore = defineStore('auth', () => {
-  // State
-  const user = ref<User | null>(null)
-  const rememberMe = ref(false)
+  const currentUser = ref<any | null>(null)
 
-  // Getters
-  const isAuthenticated = computed(() => user.value !== null)
+  const isAuthenticated = computed(() => !!getCookie(ACCESS_TOKEN_KEY))
 
-  // Actions
-  const login = async (email: string, password: string, remember: boolean): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 800))
+  const setTokens = (accessToken: string, refreshToken: string) => {
+    setCookie(ACCESS_TOKEN_KEY, accessToken, {
+      expires: 1,
+      secure: true,
+      sameSite: 'strict',
+    })
+    setCookie(REFRESH_TOKEN_KEY, refreshToken, {
+      expires: 7,
+      secure: true,
+      sameSite: 'strict',
+    })
+  }
 
-    if (password === 'password') {
-      user.value = {
-        email,
-        role: 'user',
-      }
-      rememberMe.value = remember
+  const clearTokens = () => {
+    removeCookie(ACCESS_TOKEN_KEY)
+    removeCookie(REFRESH_TOKEN_KEY)
+    currentUser.value = null
+  }
 
-      // Simulate remember me by storing in localStorage
-      if (remember) {
-        localStorage.setItem('rememberedEmail', email)
-      }
+  const getAccessToken = (): string | undefined => getCookie(ACCESS_TOKEN_KEY)
+  const getRefreshToken = (): string | undefined => getCookie(REFRESH_TOKEN_KEY)
 
+  const login = async (username: string, password: string, remember = false): Promise<boolean> => {
+    try {
+      const resp: any = await api.login(username, password)
+      setTokens(resp.access_token, resp.refresh_token)
+      currentUser.value = resp.user || null
+      if (remember) localStorage.setItem(REMEMBER_EMAIL_KEY, username)
+      else localStorage.removeItem(REMEMBER_EMAIL_KEY)
       return true
+    } catch (error: any) {
+      console.error('Login error:', error)
+      return false
     }
-    return false
   }
 
   const loginWithGoogle = async (): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Simulate Google login
-    user.value = {
-      email: 'user@gmail.com',
-      role: 'user',
-      name: 'Google User',
+    try {
+      await new Promise((r) => setTimeout(r, 1000))
+      const mock = {
+        access_token: 'google_access_token_' + Date.now(),
+        refresh_token: 'google_refresh_token_' + Date.now(),
+        user: { id: 'google_user', email: 'user@gmail.com', name: 'Google User' },
+      }
+      setTokens(mock.access_token, mock.refresh_token)
+      currentUser.value = mock.user
+      return true
+    } catch (error: any) {
+      console.error('Google login error:', error)
+      return false
     }
-
-    return true
   }
 
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    if (email && password.length >= 6 && name) {
-      user.value = {
-        email,
-        role: 'user',
-        name,
-      }
+    try {
+      const resp: any = await api.register(email, password, name)
+      setTokens(resp.access_token, resp.refresh_token)
+      currentUser.value = resp.user || null
       return true
+    } catch (error: any) {
+      console.error('Registration error:', error)
+      return false
     }
-    return false
   }
 
   const registerWithGoogle = async (): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    // Simulate Google registration
-    user.value = {
-      email: 'newuser@gmail.com',
-      role: 'user',
-      name: 'New Google User',
+    try {
+      await new Promise((r) => setTimeout(r, 1000))
+      const mock = {
+        access_token: 'google_register_token_' + Date.now(),
+        refresh_token: 'google_refresh_token_' + Date.now(),
+        user: { id: 'new_google_user', email: 'newuser@gmail.com', name: 'New Google User' },
+      }
+      setTokens(mock.access_token, mock.refresh_token)
+      currentUser.value = mock.user
+      return true
+    } catch (error: any) {
+      console.error('Google registration error:', error)
+      return false
     }
-
-    return true
   }
 
   const resetPassword = async (email: string): Promise<boolean> => {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-    return email.includes('@')
-  }
-
-  const logout = () => {
-    if (!rememberMe.value) {
-      localStorage.removeItem('rememberedEmail')
+    try {
+      await api.resetPassword(email)
+      return true
+    } catch (error: any) {
+      console.error('Reset password error:', error)
+      return false
     }
-    user.value = null
   }
 
-  const getRememberedEmail = (): string => {
-    return localStorage.getItem('rememberedEmail') || ''
+  const logout = async () => {
+    try {
+      // optionally notify backend
+      // await api.logout()
+      clearTokens()
+    } catch (error: any) {
+      console.error('Logout error:', error)
+      clearTokens()
+    }
+  }
+
+  const getRememberedEmail = (): string => localStorage.getItem(REMEMBER_EMAIL_KEY) || ''
+
+  const fetchUserProfile = async (): Promise<any | null> => {
+    const token = getAccessToken()
+    if (!token) return null
+    try {
+      const user = await api.getProfile()
+      currentUser.value = user
+      return user
+    } catch (error: any) {
+      console.error('Fetch profile error:', error)
+      clearTokens()
+      return null
+    }
+  }
+
+  const refreshAccessToken = async (): Promise<boolean> => {
+    const refreshToken = getRefreshToken()
+    if (!refreshToken) return false
+    try {
+      const resp: any = await api.refreshToken(refreshToken)
+      setCookie(ACCESS_TOKEN_KEY, resp.access_token, { expires: 1, secure: true, sameSite: 'strict' })
+      return true
+    } catch (error: any) {
+      console.error('Token refresh error:', error)
+      clearTokens()
+      return false
+    }
   }
 
   return {
-    user,
-    rememberMe,
+    currentUser,
     isAuthenticated,
     login,
     loginWithGoogle,
@@ -105,5 +155,9 @@ export const useAuthStore = defineStore('auth', () => {
     resetPassword,
     logout,
     getRememberedEmail,
+    getAccessToken,
+    getRefreshToken,
+    fetchUserProfile,
+    refreshAccessToken,
   }
 })

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen p-6 bg-background">
+  <div class="min-h-screen p-6 bg-background overflow-hidden">
     <div class="max-w-3xl mx-auto py-8 space-y-8">
       <!-- Header -->
       <div class="text-center space-y-3">
