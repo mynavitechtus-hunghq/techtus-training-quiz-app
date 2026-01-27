@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -21,8 +22,23 @@ dist-ssr
 !.vscode/extensions.json
 .idea
 .DS_Store
+=======
+# Editor directories and files
+.vscode/
+.idea/
+>>>>>>> 3a0a201 ([QUIZ-11] Implement UI login, register, forgot password pages with StudySpark branding)
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+<<<<<<< HEAD
+=======
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+>>>>>>> 3a0a201 ([QUIZ-11] Implement UI login, register, forgot password pages with StudySpark branding)
