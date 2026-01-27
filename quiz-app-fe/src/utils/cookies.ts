@@ -10,13 +10,7 @@ interface CookieOptions {
  * Set a cookie
  */
 export function setCookie(name: string, value: string, options: CookieOptions = {}): void {
-  const {
-    expires,
-    path = '/',
-    domain,
-    secure = true,
-    sameSite = 'strict'
-  } = options
+  const { expires, path = '/', domain, secure = true, sameSite = 'strict' } = options
 
   let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`
 
@@ -67,7 +61,7 @@ export function getCookie(name: string): string | undefined {
 export function removeCookie(name: string, options: Omit<CookieOptions, 'expires'> = {}): void {
   setCookie(name, '', {
     ...options,
-    expires: -1
+    expires: -1,
   })
 }
 
