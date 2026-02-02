@@ -8,29 +8,24 @@
       </p>
     </div>
 
+    <!-- Success Message -->
+    <Alert v-if="successMessage" class="animate-fade-in-up border-chart-2 bg-chart-2/10">
+      <CheckCircle class="text-chart-2 h-4 w-4" />
+      <AlertDescription class="text-chart-2">
+        {{ successMessage }}
+      </AlertDescription>
+    </Alert>
+
+    <!-- Error Message -->
+    <Alert v-if="errorMessage" variant="destructive" class="animate-fade-in-up">
+      <AlertCircle class="h-4 w-4" />
+      <AlertDescription>
+        {{ errorMessage }}
+      </AlertDescription>
+    </Alert>
+
     <!-- Register Form -->
     <form class="animate-fade-in-up delay-100 space-y-5" @submit="handleSignUp">
-      <!-- Full Name Field -->
-      <FormField v-slot="{ componentField }" name="fullName">
-        <FormItem class="space-y-2">
-          <FormLabel class="text-foreground text-sm font-medium">Full name</FormLabel>
-          <FormControl>
-            <div class="relative">
-              <User
-                class="text-muted-foreground pointer-events-none absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2"
-              />
-              <Input
-                v-bind="componentField"
-                type="text"
-                placeholder="Enter your full name"
-                class="border-input bg-background focus:border-primary focus:ring-primary/20 h-12 rounded-xl pl-12 text-base transition-all focus:ring-2"
-              />
-            </div>
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      </FormField>
-
       <!-- Email Field -->
       <FormField v-slot="{ componentField }" name="email">
         <FormItem class="space-y-2">
@@ -161,6 +156,7 @@
       <Button
         type="button"
         variant="outline"
+        :disabled="isSubmitting"
         class="border-border hover:bg-accent h-12 cursor-pointer gap-2 rounded-xl text-sm font-medium transition-all"
         @click="handleGoogleSignUp"
       >
@@ -170,6 +166,7 @@
       <Button
         type="button"
         variant="outline"
+        :disabled="isSubmitting"
         class="border-border hover:bg-accent h-12 cursor-pointer gap-2 rounded-xl text-sm font-medium transition-all"
         @click="handleFacebookSignUp"
       >
@@ -199,13 +196,14 @@ import { useRouter } from 'vue-router'
 import { useForm } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-vue-next'
+import { Eye, EyeOff, Mail, Lock, CheckCircle, AlertCircle } from 'lucide-vue-next'
 
 import Button from '@/components/ui/button/Button.vue'
 import Input from '@/components/ui/input/Input.vue'
 import Icon from '@/components/ui/icon/Icon.vue'
 import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
 import Spinner from '@/components/ui/spinner/Spinner.vue'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import {
   FormControl,
   FormField,
@@ -213,10 +211,10 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { useAuthStore } from '@/stores/auth.store'
 
 const registerSchema = z
   .object({
-    fullName: z.string().min(2, 'Full name must be at least 2 characters'),
     email: z.string().email('Please enter a valid email address'),
     password: z.string().min(8, 'Password must be at least 8 characters'),
     confirmPassword: z.string(),
@@ -227,32 +225,47 @@ const registerSchema = z
   })
 
 const router = useRouter()
+const authStore = useAuthStore()
+
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
 const agreeTerms = ref(false)
 const isSubmitting = ref(false)
+const errorMessage = ref('')
+const successMessage = ref('')
 
 const { handleSubmit } = useForm({
   validationSchema: toTypedSchema(registerSchema),
   initialValues: {
-    fullName: '',
     email: '',
     password: '',
     confirmPassword: '',
   },
 })
 
-const handleSignUp = handleSubmit((values) => {
+const handleSignUp = handleSubmit(async (values) => {
   if (isSubmitting.value || !agreeTerms.value) return
 
   isSubmitting.value = true
+  errorMessage.value = ''
+  successMessage.value = ''
+
   try {
-    console.log('Register values:', values)
-    // TODO: Implement actual register logic
-    setTimeout(() => {
-      isSubmitting.value = false
-    }, 1500)
-  } catch {
+    const result = await authStore.register(values.email, values.password)
+
+    if (result.success) {
+      successMessage.value = result.message || 'Account created successfully! Redirecting to login...'
+      // Redirect to login after 2 seconds
+      setTimeout(() => {
+        router.push({ name: 'Login', query: { email: values.email } })
+      }, 2000)
+    } else {
+      errorMessage.value = result.message || 'Registration failed. Please try again.'
+    }
+  } catch (error) {
+    console.error('Registration error:', error)
+    errorMessage.value = 'An unexpected error occurred. Please try again.'
+  } finally {
     isSubmitting.value = false
   }
 })
@@ -261,23 +274,37 @@ const goToLogin = () => {
   router.push({ name: 'Login' })
 }
 
-const handleGoogleSignUp = () => {
-  // TODO: Implement Google OAuth sign up
-  console.log('Google sign up clicked')
+const handleGoogleSignUp = async () => {
+  if (isSubmitting.value) return
+
+  isSubmitting.value = true
+  errorMessage.value = ''
+
+  try {
+    const result = await authStore.registerWithGoogle()
+    if (result.success) {
+      router.push({ name: 'Dashboard' })
+    } else {
+      errorMessage.value = result.message || 'Google sign up failed'
+    }
+  } catch (error) {
+    console.error('Google sign up error:', error)
+    errorMessage.value = 'Google sign up failed. Please try again.'
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 const handleFacebookSignUp = () => {
   // TODO: Implement Facebook OAuth sign up
-  console.log('Facebook sign up clicked')
+  errorMessage.value = 'Facebook sign up is not available yet.'
 }
 
 const openTermsOfService = () => {
-  // TODO: Navigate to Terms of Service page or open modal
   window.open('/terms-of-service', '_blank')
 }
 
 const openPrivacyPolicy = () => {
-  // TODO: Navigate to Privacy Policy page or open modal
   window.open('/privacy-policy', '_blank')
 }
 </script>
