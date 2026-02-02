@@ -54,3 +54,56 @@ export interface SuccessResponse {
   success: true
   message: string
 }
+
+/**
+ * Login Request
+ */
+export interface LoginRequest {
+  username: string
+  password: string
+}
+
+/**
+ * Login Response Data
+ */
+export interface LoginResponseData {
+  access_token: string
+  refresh_token: string
+  user: UserProfileData
+}
+
+/**
+ * Register Request
+ */
+export interface RegisterRequest {
+  email: string
+  password: string
+  name: string
+}
+
+/**
+ * Refresh Token Request
+ */
+export interface RefreshTokenRequest {
+  refresh_token: string
+}
+
+/**
+ * Refresh Token Response Data
+ */
+export interface RefreshTokenResponseData {
+  access_token: string
+  refresh_token: string
+}
+
+/**
+ * User Profile Data
+ */
+export interface UserProfileData {
+  id: string
+  email: string
+  name?: string
+  avatar?: string
+  created_at?: string
+  updated_at?: string
+}
