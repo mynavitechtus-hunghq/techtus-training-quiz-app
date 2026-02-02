@@ -21,13 +21,16 @@ interface RequestOptions extends RequestInit {
  * Custom API Error class
  */
 export class ApiError extends Error {
-  constructor(
-    public statusCode: number,
-    public error: string,
-    public details?: unknown
-  ) {
+  statusCode: number
+  error: string
+  details?: unknown
+
+  constructor(statusCode: number, error: string, details?: unknown) {
     super(error)
     this.name = 'ApiError'
+    this.statusCode = statusCode
+    this.error = error
+    this.details = details
   }
 }
 
@@ -38,9 +41,9 @@ export async function apiRequest<T>(endpoint: string, options: RequestOptions = 
   const { requiresAuth = true, headers = {}, ...restOptions } = options
   const authStore = useAuthStore()
 
-  const requestHeaders: HeadersInit = {
+  const requestHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...headers,
+    ...(headers as Record<string, string>),
   }
 
   // Add Authorization header if required
@@ -72,7 +75,9 @@ export async function apiRequest<T>(endpoint: string, options: RequestOptions = 
         if (refreshed) {
           // Retry the request with new token
           const newToken = authStore.getAccessToken()
-          requestHeaders['Authorization'] = `Bearer ${newToken}`
+          if (newToken) {
+            requestHeaders['Authorization'] = `Bearer ${newToken}`
+          }
 
           const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, {
             ...restOptions,

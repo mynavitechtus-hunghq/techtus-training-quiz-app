@@ -19,8 +19,8 @@
               {{ userInitial }}
             </div>
             <div class="text-center">
-              <CardTitle class="text-2xl font-bold">{{ authStore.user?.name || 'User' }}</CardTitle>
-              <CardDescription class="text-base mt-1">{{ authStore.user?.email }}</CardDescription>
+              <CardTitle class="text-2xl font-bold">{{ authStore.currentUser?.name || 'User' }}</CardTitle>
+              <CardDescription class="text-base mt-1">{{ authStore.currentUser?.email }}</CardDescription>
             </div>
             <Badge class="rounded-full px-4 py-1.5 font-semibold"> User Account </Badge>
           </div>
@@ -37,7 +37,7 @@
             <div class="grid gap-4">
               <!-- Name -->
               <div
-                v-if="authStore.user?.name"
+                v-if="authStore.currentUser?.name"
                 class="flex items-start gap-4 p-5 rounded-xl bg-muted border"
               >
                 <div
@@ -48,7 +48,7 @@
                 <div class="flex-1 min-w-0">
                   <Label class="text-sm font-semibold block mb-1"> Full Name </Label>
                   <p class="text-base font-medium">
-                    {{ authStore.user.name }}
+                    {{ authStore.currentUser?.name }}
                   </p>
                 </div>
               </div>
@@ -63,7 +63,7 @@
                 <div class="flex-1 min-w-0">
                   <Label class="text-sm font-semibold block mb-1"> Email Address </Label>
                   <p class="text-base font-medium break-all">
-                    {{ authStore.user?.email }}
+                    {{ authStore.currentUser?.email }}
                   </p>
                 </div>
               </div>
@@ -154,10 +154,10 @@ const router = useRouter()
 const authStore = useAuthStore()
 
 const userInitial = computed(() => {
-  if (authStore.user?.name) {
-    return authStore.user.name.charAt(0).toUpperCase()
+  if (authStore.currentUser?.name) {
+    return authStore.currentUser.name.charAt(0).toUpperCase()
   }
-  return authStore.user?.email.charAt(0).toUpperCase() || 'U'
+  return authStore.currentUser?.email?.charAt(0).toUpperCase() || 'U'
 })
 
 const handleLogout = () => {
